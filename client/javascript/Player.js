@@ -1,5 +1,5 @@
 const SPEED = 120;
-const SIZE  = 20;
+const SIZE  = 30;
 
 class Player {
   constructor(id, color) {

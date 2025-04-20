@@ -1,31 +1,42 @@
+// game.js
+
 const canvas = document.getElementById('gameCanvas');
 const ctx = canvas.getContext('2d');
 let mapData = null;
 const TILE_SIZE = 60; // Taille de chaque case en pixels
 
+let gridData = null;
+
+// 1) Charge la grille et démarre la boucle
 fetch('/client/json/matrice1.json')
   .then(res => res.json())
   .then(grille => {
     mapData = grille; 
     drawGrid(grille);
-  });
+    gridData = grille;
+    // ajuste la taille du canvas si besoin :
+    canvas.width  = grille[0].length * TILE_SIZE;
+    canvas.height = grille.length    * TILE_SIZE;
+    requestAnimationFrame(gameLoop);
+  })
+  .catch(err => console.error("Erreur chargement grille :", err));
 
-function drawGrid(grille) {
-  for (let y = 0; y < grille.length; y++) {
-    for (let x = 0; x < grille[y].length; x++) {
-      const val = grille[y][x];
-
-      if (val === 1) {
-        ctx.fillStyle = '#333'; // mur
-      } else {
-        ctx.fillStyle = '#eee'; // sol
-      }
-
-      ctx.fillRect(x * TILE_SIZE, y * TILE_SIZE, TILE_SIZE, TILE_SIZE);
+// 2) Fonction qui dessine la grille (appelée chaque frame)
+function drawGrid() {
+  for (let y = 0; y < gridData.length; y++) {
+    for (let x = 0; x < gridData[y].length; x++) {
+      ctx.fillStyle = gridData[y][x] === 1 ? '#333' : '#eee';
+      ctx.fillRect(
+        x * TILE_SIZE,
+        y * TILE_SIZE,
+        TILE_SIZE,
+        TILE_SIZE
+      );
     }
   }
 }
 
+// 3) Ton init WebSocket et players restent inchangés...
 const monId       = Math.random().toString(36).slice(2,9);
 const localPlayer = new Player(monId, "blue");
 const others      = {};
@@ -38,7 +49,7 @@ const protocol = window.location.protocol === "https:" ? "wss" : "ws";
 const ws = new WebSocket(`${protocol}://${window.location.host}/ws`);
 
 let lastTs = performance.now();
-ws.onopen = () => requestAnimationFrame(gameLoop);
+ws.onopen    = () => requestAnimationFrame(gameLoop);
 ws.onmessage = ({data}) => {
   const msg = JSON.parse(data);
   if (msg.type === "positions") {
@@ -50,19 +61,27 @@ ws.onmessage = ({data}) => {
     }
   }
 };
-
 ws.onerror = err => console.error("WS erreur :", err);
 
+// 4) Boucle de jeu
 function gameLoop(ts) {
   const dt = (ts - lastTs)/1000;
   lastTs = ts;
 
   localPlayer.update(keys, dt, mapData);
+  // MAJ + envoi position
   localPlayer.sendPosition(ws);
 
-  ctx.clearRect(0,0,canvas.width,canvas.height);
-  localPlayer.draw();
-  Object.values(others).forEach(p => p.draw());
+  // 1) Efface tout
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
 
+  // 2) DESSINE D’ABORD LA GRILLE
+  if (gridData) drawGrid();
+
+  // 3) PUIS LES JOUEURS
+  localPlayer.draw(ctx);
+  Object.values(others).forEach(p => p.draw(ctx));
+
+  // 4) Prochaine frame
   requestAnimationFrame(gameLoop);
 }
