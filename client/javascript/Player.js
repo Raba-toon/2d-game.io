@@ -1,7 +1,5 @@
 const SPEED = 120;
 const SIZE  = 20;
-const canvas = document.getElementById("game");
-const ctx    = canvas.getContext("2d");
 
 class Player {
   constructor(id, color) {
