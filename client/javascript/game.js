@@ -20,29 +20,43 @@ fetch('/client/json/matrice1.json')
   })
   .catch(err => console.error("Erreur chargement grille :", err));
 
-const monId = Math.random().toString(36).substring(2,9);
+const monId       = Math.random().toString(36).slice(2,9);
+const localPlayer = new Player(monId, "blue");
+const others      = {};
+
+const keys = {};
+document.addEventListener("keydown", e => { keys[e.key] = true; });
+document.addEventListener("keyup",   e => { keys[e.key] = false; });
+
 const protocol = window.location.protocol === "https:" ? "wss" : "ws";
 const ws = new WebSocket(`${protocol}://${window.location.host}/ws`);
 
-ws.onopen = () => {
-  console.log("WS ouvert, monId =", monId);
-  lastTs = performance.now();
-  requestAnimationFrame(gameLoop);
-};
-
-ws.onmessage = ({ data }) => {
+let lastTs = performance.now();
+ws.onopen = () => requestAnimationFrame(gameLoop);
+ws.onmessage = ({data}) => {
   const msg = JSON.parse(data);
   if (msg.type === "positions") {
-    Object.assign(others, msg.positions);
-    delete others[monId];
+    for (const [id, pos] of Object.entries(msg.positions)) {
+      if (id === monId) continue;
+      if (!others[id]) others[id] = new Player(id, "red");
+      others[id].x = pos.x;
+      others[id].y = pos.y;
+    }
   }
 };
 
 ws.onerror = err => console.error("WS erreur :", err);
 
 function gameLoop(ts) {
-  const dt = (ts - lastTs) / 1000;
+  const dt = (ts - lastTs)/1000;
   lastTs = ts;
+
+  localPlayer.update(keys, dt);
+  localPlayer.sendPosition(ws);
+
+  ctx.clearRect(0,0,canvas.width,canvas.height);
+  localPlayer.draw();
+  Object.values(others).forEach(p => p.draw());
 
   requestAnimationFrame(gameLoop);
 }
