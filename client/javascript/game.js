@@ -1,4 +1,4 @@
-fetch('../json/matrice1.json')  // depuis /client/javascript vers /client/json
+fetch('./client/json/matrice1.json')  // depuis /client/javascript vers /client/json
   .then(response => response.json())
   .then(grille => {
     console.log("Grille chargée :", grille);
