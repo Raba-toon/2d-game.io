@@ -2,6 +2,7 @@ Jeu comme Dead by Daylight
 Ligne directrice : dans un manoir de pédophile.
 en 2d
 
-Lampe torche alors tu ne vois pas tout autour
+Lampe torche alors tu ne vois pas tout autour de toi
+Trouver des objets sur la map, etc. 
 
 
