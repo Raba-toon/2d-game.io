@@ -7,14 +7,26 @@ class Player {
     this.color  = color;
     this.x      = 50;
     this.y      = 50;
+    this.speed = 5;
   }
 
 
-  update(keys, dt) {
+  update(keys, dt, map) {
+    let nextX = this.x;
+    let nextY = this.y;
+
     if (keys["ArrowUp"])    this.y -= SPEED * dt;
     if (keys["ArrowDown"])  this.y += SPEED * dt;
     if (keys["ArrowLeft"])  this.x -= SPEED * dt;
     if (keys["ArrowRight"]) this.x += SPEED * dt;
+
+    const tileX = Math.floor(nextX);
+    const tileY = Math.floor(nextY);
+
+    if (map[tileY] && map[tileY][tileX] !== 1) {
+      this.x = nextX;
+      this.y = nextY;
+    }
   }
 
   sendPosition(ws) {

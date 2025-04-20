@@ -1,11 +1,12 @@
 const canvas = document.getElementById('gameCanvas');
 const ctx = canvas.getContext('2d');
-
+let mapData = null;
 const TILE_SIZE = 60; // Taille de chaque case en pixels
 
 fetch('/client/json/matrice1.json')
   .then(res => res.json())
   .then(grille => {
+    mapData = grille; 
     drawGrid(grille);
   });
 
@@ -56,7 +57,7 @@ function gameLoop(ts) {
   const dt = (ts - lastTs)/1000;
   lastTs = ts;
 
-  localPlayer.update(keys, dt);
+  localPlayer.update(keys, dt, mapData);
   localPlayer.sendPosition(ws);
 
   ctx.clearRect(0,0,canvas.width,canvas.height);
