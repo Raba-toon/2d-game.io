@@ -1,9 +1,13 @@
+body{
+    background-color: black;
+}
+
 .grille {
     display: grid;
     grid-template-columns: repeat(10, 30px);
     grid-template-rows: repeat(10, 30px);
     margin: 20px;
-  }
+}
 
 .case {
     width: 30px;
