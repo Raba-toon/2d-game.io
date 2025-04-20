@@ -1,24 +1,29 @@
+const canvas = document.getElementById('gameCanvas');
+const ctx = canvas.getContext('2d');
+
+const TILE_SIZE = 60; // Taille de chaque case en pixels
+
 fetch('/client/json/matrice1.json')
   .then(res => res.json())
   .then(grille => {
-    // Créer dynamiquement le conteneur de la grille
-    const grilleDiv = document.createElement('div');
-    grilleDiv.classList.add('grille');
+    drawGrid(grille);
+  });
 
-    // Générer les cases à partir de la matrice
-    grille.forEach((ligne, y) => {
-      ligne.forEach((valeur, x) => {
-        const caseDiv = document.createElement('div');
-        caseDiv.classList.add('case');
-        caseDiv.classList.add(valeur === 1 ? 'mur' : 'sol');
-        grilleDiv.appendChild(caseDiv);
-      });
-    });
+function drawGrid(grille) {
+  for (let y = 0; y < grille.length; y++) {
+    for (let x = 0; x < grille[y].length; x++) {
+      const val = grille[y][x];
 
-    // Ajouter la grille dans le <body>
-    document.body.appendChild(grilleDiv);
-  })
-  .catch(err => console.error("Erreur chargement grille :", err));
+      if (val === 1) {
+        ctx.fillStyle = '#333'; // mur
+      } else {
+        ctx.fillStyle = '#eee'; // sol
+      }
+
+      ctx.fillRect(x * TILE_SIZE, y * TILE_SIZE, TILE_SIZE, TILE_SIZE);
+    }
+  }
+}
 
 const monId       = Math.random().toString(36).slice(2,9);
 const localPlayer = new Player(monId, "blue");
