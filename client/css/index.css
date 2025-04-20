@@ -4,14 +4,14 @@ body{
 
 .grille {
     display: grid;
-    grid-template-columns: repeat(10, 30px);
-    grid-template-rows: repeat(10, 30px);
+    grid-template-columns: repeat(12, 60px);
+    grid-template-rows: repeat(20, 60px);
     margin: 20px;
 }
 
 .case {
-    width: 30px;
-    height: 30px;
+    width: 60px;
+    height: 60px;
 }
 
 .mur {
