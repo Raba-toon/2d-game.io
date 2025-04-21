@@ -52,8 +52,8 @@ class Player {
    * @param {Object} others     mapping id→Player pour collision joueurs
    */
   update(keys, dt, map, tileSize, others) {
-    const dirX = (keys["ArrowRight"] ? 1 : 0) - (keys["ArrowLeft"] ? 1 : 0);
-    const dirY = (keys["ArrowDown"]  ? 1 : 0) - (keys["ArrowUp"]   ? 1 : 0);
+    let dirX = (keys["ArrowRight"] ? 1 : 0) - (keys["ArrowLeft"] ? 1 : 0);
+    let dirY = (keys["ArrowDown"]  ? 1 : 0) - (keys["ArrowUp"]   ? 1 : 0);
 
     const nextX = this.x + dirX * SPEED * dt;
     const nextY = this.y + dirY * SPEED * dt;
@@ -63,7 +63,7 @@ class Player {
       dirX /= len;
       dirY /= len;
     }
-    
+
     // Tests pour chaque axe
     const testX = { x: nextX, y: this.y, width: this.size, height: this.size };
     const wallX = this.collidesWithWall(testX, map, tileSize);
