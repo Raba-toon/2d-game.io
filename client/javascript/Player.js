@@ -136,7 +136,12 @@ export class Player {
     }
   }
 
+  
+
+
   draw(ctx, cameraX = 0, cameraY = 0) {
+    //enleve le flou de l'image
+    ctx.imageSmoothingEnabled = false;
     // Draw current animation frame
     ctx.drawImage(
       spriteImage,
