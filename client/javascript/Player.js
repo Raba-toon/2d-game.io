@@ -29,32 +29,37 @@ class Player {
   }
 
   update(keys, dt, map) {
-    const moveX = (keys["ArrowRight"] ? 1 : 0) - (keys["ArrowLeft"] ? 1 : 0);
-    const moveY = (keys["ArrowDown"]  ? 1 : 0) - (keys["ArrowUp"]   ? 1 : 0);
-  
-    const nextX = this.x + moveX * SPEED * dt;
-    const nextY = this.y + moveY * SPEED * dt;
-  
+    let nextX = this.x;
+    let nextY = this.y;
+
+    if (keys["ArrowUp"])    this.y -= SPEED * dt;
+    if (keys["ArrowDown"])  this.y += SPEED * dt;
+    if (keys["ArrowLeft"])  this.x -= SPEED * dt;
+    if (keys["ArrowRight"]) this.x += SPEED * dt;
+
+    const tileX = Math.floor(nextX);
+    const tileY = Math.floor(nextY);
+    
     // 1) Horizontal test
     const testX = {
-      x:      nextX,
+      x:      tileX,
       y:      this.y,
       width:  this.size,
       height: this.size
     };
     if (!this.collidesWithWall(testX, map)) {
-      this.x = nextX;
+      this.x = tileX;
     }
   
-    // 2) Vertical test
+    // 2) Vertical tests
     const testY = {
       x:      this.x,
-      y:      nextY,
+      y:      tileY,
       width:  this.size,
       height: this.size
     };
     if (!this.collidesWithWall(testY, map)) {
-      this.y = nextY;
+      this.y = tileY;
     }
   }
   
