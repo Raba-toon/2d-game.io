@@ -242,6 +242,10 @@ function drawGrid(ctx) {
       }
     }
   }
+  // 🌿 Dessiner les cachettes
+  for (const key in hidingSpots) {
+    hidingSpots[key].draw(ctx, TILE_SIZE);
+  }
 }
 
 /* ──────────────────────────────────
