@@ -4,7 +4,6 @@ const canvas = document.getElementById('gameCanvas');
 const ctx = canvas.getContext('2d');
 let mapData = null;
 const TILE_SIZE = 60; // Taille de chaque case en pixels
-
 let gridData = null;
 
 // 1) Charge la grille et démarre la boucle
@@ -19,12 +18,10 @@ fetch('/client/json/matrice1.json')
     // draw once immediately
     drawGrid();
 
-    // then start the loop (no darkness, just grid+players)
+    // then start the loop
     requestAnimationFrame(gameLoop);
   })
   .catch(err => console.error("Erreur chargement grille :", err));
-
-
 
 // 2) Fonction qui dessine la grille (appelée chaque frame)
 function drawGrid() {
@@ -41,19 +38,16 @@ function drawGrid() {
   }
 }
 
-// 3) Ton init WebSocket et players restent inchangés...
+// 3) Init WebSocket et joueurs
 const monId       = Math.random().toString(36).slice(2,9);
 const localPlayer = new Player(monId, "blue");
 const others      = {};
-
 const keys = {};
 document.addEventListener("keydown", e => { keys[e.key] = true; });
 document.addEventListener("keyup",   e => { keys[e.key] = false; });
-
 const protocol = window.location.protocol === "https:" ? "wss" : "ws";
 const ws = new WebSocket(`${protocol}://${window.location.host}/ws`);
 
-let lastTs = performance.now();
 ws.onopen    = () => requestAnimationFrame(gameLoop);
 ws.onmessage = ({data}) => {
   const msg = JSON.parse(data);
@@ -68,28 +62,37 @@ ws.onmessage = ({data}) => {
 };
 ws.onerror = err => console.error("WS erreur :", err);
 
-// 4) Boucle de jeu
+let lastTs = performance.now();
+
+// 4) Boucle de jeu avec caméra suivie
 function gameLoop(ts) {
-  // 1) compute delta‑time
+  // a) delta-time
   const dt = (ts - lastTs) / 1000;
   lastTs = ts;
 
-  // 2) update + send your player
+  // b) mise à jour et envoi de la position
   localPlayer.update(keys, dt, mapData, TILE_SIZE, others);
   localPlayer.sendPosition(ws);
 
-  // 3) clear canvas
+  // c) effacer le canvas
   ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-  // 4) draw the grid each frame
-  if (gridData) drawGrid();
+  // d) calcul de l'offset caméra (on centre le joueur)
+  const offsetX = localPlayer.x - canvas.width / 2 + localPlayer.size / 2;
+  const offsetY = localPlayer.y - canvas.height / 2 + localPlayer.size / 2;
 
-  // 5) draw local player + others
+  // e) appliquer la transformation
+  ctx.save();
+  ctx.translate(-offsetX, -offsetY);
+
+  // f) dessin du monde et des joueurs
+  if (gridData) drawGrid();
   localPlayer.draw(ctx);
   Object.values(others).forEach(p => p.draw(ctx));
 
-  // 6) schedule next frame
+  // g) restaurer l'état du contexte
+  ctx.restore();
+
+  // h) prochaine frame
   requestAnimationFrame(gameLoop);
 }
-
-
