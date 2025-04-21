@@ -11,7 +11,7 @@ positions: dict[str, dict]       = {}
 player_ids: dict[WebSocket, str] = {}
 player_names: dict[str, str]     = {}
 doors: dict[str, bool]           = {}
-
+hiding_spots: dict[str, bool] = {}
 # --- NEW: état des lampes ---------------------------------------------- 🔆
 lights: dict[str, bool]          = {}   # id → True (allumée) / False (éteinte)
 # ------------------------------------------------------------------------
@@ -29,7 +29,8 @@ async def broadcast_state():
                 "type":      "state",
                 "positions": positions,
                 "doors":     doors,
-                "lights":    lights          # 🔆
+                "lights":    lights,          # 🔆
+                "hiding_spots": hiding_spots
             }
             for ws in list(clients):
                 try:
@@ -117,6 +118,11 @@ async def ws_endpoint(ws: WebSocket):
                 key = f'{msg["x"]},{msg["y"]}'
                 doors[key] = not doors.get(key, False)
                 print(f"Porte {key} -> {doors[key]}")
+            # Pour hide
+            elif msg.get("type") == "toggleHidingSpot" and ws in player_ids:
+                hide_key = f"{msg['x']},{msg['y']}"
+                hiding_spots[hide_key] = not hiding_spots.get(hide_key, False)
+                print(f"Cachette {hide_key} est maintenant {'occupée' if hiding_spots[hide_key] else 'libre'}")
 
             # ------------------ NOUVEAU : lampe -------------------------- 🔆
             elif msg.get("type") == "toggleLight" and ws in player_ids:
