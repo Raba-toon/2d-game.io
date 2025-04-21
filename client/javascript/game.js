@@ -298,19 +298,15 @@ function toggleHidingNearPlayer(player) {
   for (const key in hidingSpots) {
     const spot = hidingSpots[key];
 
-    if (spot.isAt(player, TILE_SIZE)) {
-      // Si déjà caché → sortir
+    if (spot.isNear(player, TILE_SIZE)) {
       if (player.isHidden) {
         player.isHidden = false;
         spot.isOccupied = false;
-      } 
-      // Sinon → se cacher
-      else if (!spot.isOccupied) {
+      } else if (!spot.isOccupied) {
         player.isHidden = true;
         spot.isOccupied = true;
       }
-
-      break; // Un seul spot à la fois
+      break; // Une seule cachette à la fois
     }
   }
 }
