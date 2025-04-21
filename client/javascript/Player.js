@@ -14,12 +14,14 @@ export class Player {
   constructor(id, color) {
     this.id = id;
     this.color = color;
-    this.size = SPRITE_WIDTH;  // draw size (can scale)
+    this.size = SPRITE_WIDTH * 1.5;  // draw size (can scale)
     this.x = 100;
     this.y = 100;
     this.lightOn = true;       // state of the lamp
     this.isHidden = false;
     
+    this.facingRight = true;
+
     // Animation state
     this.frame = 0;
     this.frameTime = 0;
@@ -68,61 +70,37 @@ export class Player {
    * @param {number} tileSize   tile size in px
    * @param {Object} others     other players
    */
-  update(keys, dt, map, tileSize, others) {
-    // Empêche tout mouvement si le joueur est caché
-    if (this.isHidden) return;
-    // Movement vector
+  update(keys, dt, map, /** tileSize */ tileSize, others) {   // ←← renommé
+    
     let dirX = (keys['d'] ? 1 : 0) - (keys['a'] ? 1 : 0);
     let dirY = (keys['s'] ? 1 : 0) - (keys['w'] ? 1 : 0);
 
-    // Normalize diagonal
-    const len = Math.hypot(dirX, dirY);
-    if (len > 0) {
-      dirX /= len;
-      dirY /= len;
-    }
+    if (dirX > 0) this.facingRight = true;
+    else if (dirX < 0) this.facingRight = false;
 
-    // Compute movement
+    const len = Math.hypot(dirX, dirY);
+    if (len) { dirX /= len; dirY /= len; }
+
     const moveX = dirX * SPEED * dt;
     const moveY = dirY * SPEED * dt;
 
-    // Horizontal collision
+    // collisions (inchangé, mais maintenant tileSize existe)
     const testX = { x: this.x + moveX, y: this.y, width: this.size, height: this.size };
     const wallX = this.collidesWithWall(testX, map, tileSize);
     const playerX = this.collidesWithPlayers(testX, others);
-    if (!wallX && !playerX) {
-      this.x += moveX;
-    }
+    if (!wallX && !playerX) this.x += moveX;
 
-    // Vertical collision
     const testY = { x: this.x, y: this.y + moveY, width: this.size, height: this.size };
     const wallY = this.collidesWithWall(testY, map, tileSize);
     const playerY = this.collidesWithPlayers(testY, others);
-    if (!wallY && !playerY) {
-      this.y += moveY;
-    }
+    if (!wallY && !playerY) this.y += moveY;
 
-    // Unstick if blocked both ways
-    const movedX = !wallX && !playerX;
-    const movedY = !wallY && !playerY;
-    if (!movedX && !movedY && (dirX !== 0 || dirY !== 0)) {
-      if (!wallX) this.x += moveX;
-      else if (!wallY) this.y += moveY;
-    }
+    if (!wallX && wallY) this.x += moveX;
+    if (!wallY && wallX) this.y += moveY;
 
-    // Animation: advance frames when moving
-    const moving = dirX !== 0 || dirY !== 0;
-    if (moving) {
-      this.frameTime += dt;
-      if (this.frameTime >= FRAME_DURATION) {
-        this.frameTime -= FRAME_DURATION;
-        this.frame = (this.frame + 1) % FRAME_COUNT;
-      }
-    } else {
-      // Idle frame
-      this.frame = 0;
-      this.frameTime = 0;
-    }
+    /* animation locale */
+    if (dirX || dirY) this.animate(dt);
+    else { this.frame = 0; this.frameTime = 0; }
   }
 
   sendPosition(ws) {
@@ -139,17 +117,24 @@ export class Player {
     }
   }
 
-  draw(ctx, cameraX = 0, cameraY = 0) {
-    if (this.isHidden) {
-      return; // ne rien dessiner si caché
+  draw(ctx, camX = 0, camY = 0) {
+    if(this.isHidden)
+      return;
+    ctx.save();
+    if (!this.facingRight) {
+      ctx.translate(this.x - camX + this.size, this.y - camY);
+      ctx.scale(-1, 1);
+      ctx.drawImage(spriteImage,
+        this.frame * SPRITE_WIDTH, 0,
+        SPRITE_WIDTH, SPRITE_HEIGHT,
+        0, 0, this.size, this.size);
+    } else {
+      ctx.drawImage(spriteImage,
+        this.frame * SPRITE_WIDTH, 0,
+        SPRITE_WIDTH, SPRITE_HEIGHT,
+        this.x - camX, this.y - camY,
+        this.size, this.size);
     }
-    // Draw current animation frame
-    ctx.drawImage(
-      spriteImage,
-      this.frame * SPRITE_WIDTH, 0,
-      SPRITE_WIDTH, SPRITE_HEIGHT,
-      this.x - cameraX, this.y - cameraY,
-      this.size, this.size
-    );
+    ctx.restore();
   }
 }
