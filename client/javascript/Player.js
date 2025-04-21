@@ -4,9 +4,17 @@ export class Player {
   constructor(id, color) {
     this.id    = id;
     this.color = color;
-    this.size  = 30;  // largeur et hauteur du carré
+    this.size  = 30;
     this.x     = 100;
     this.y     = 100;
+    this.lightOn = true;           // 🔆 état de la lampe
+
+    //IMAGES
+    this.image = new Image();
+    this.image.src = "images/players/baby-crawl-white.png";
+    this.frame = 0;          // Numéro de frame
+    this.frameTimer = 0;     // Timer pour l'animation
+    this.frameInterval = 0.2; // Temps entre frames (secondes)
   }
 
   // Vérifie si deux rectangles se chevauchent
@@ -92,6 +100,13 @@ collidesWithWall(rect, map, tileSize) {
       if (!wallX) this.x += moveX;
       else if (!wallY) this.y += moveY;
     }
+
+    // Animation
+    this.frameTimer += dt;
+    if (this.frameTimer >= this.frameInterval) {
+      this.frame = (this.frame + 1) % 18; // 18 frames 
+      this.frameTimer = 0;
+    }
   }
 
   sendPosition(ws) {
@@ -106,13 +121,23 @@ collidesWithWall(rect, map, tileSize) {
   }
 
   draw(ctx, cameraX = 0, cameraY = 0) {
-    ctx.fillStyle = this.color;
-    ctx.fillRect(
+    ctx.drawImage(
+      this.image,
       this.x - cameraX,
       this.y - cameraY,
       this.size,
       this.size
     );
+
+
+
+    //ctx.fillStyle = this.color;
+    //ctx.fillRect(
+    //  this.x - cameraX,
+    //  this.y - cameraY,
+    //  this.size,
+    //  this.size
+    //);
   }
 }
 
