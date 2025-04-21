@@ -121,23 +121,21 @@ collidesWithWall(rect, map, tileSize) {
   }
 
   draw(ctx, cameraX = 0, cameraY = 0) {
-    ctx.drawImage(
-      this.image,
-      this.x - cameraX,
-      this.y - cameraY,
-      this.size,
-      this.size
-    );
-
-
-
-    //ctx.fillStyle = this.color;
-    //ctx.fillRect(
+    //ctx.drawImage(
+    //  this.image,
     //  this.x - cameraX,
     //  this.y - cameraY,
     //  this.size,
     //  this.size
     //);
+
+    ctx.fillStyle = this.color;
+    ctx.fillRect(
+      this.x - cameraX,
+      this.y - cameraY,
+      this.size,
+      this.size
+    );
   }
 }
 
