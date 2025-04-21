@@ -52,45 +52,43 @@ class Player {
    * @param {Object} others     mapping id→Player pour collision joueurs
    */
   update(keys, dt, map, tileSize, others) {
+    // Calcul du vecteur direction
     let dirX = (keys["ArrowRight"] ? 1 : 0) - (keys["ArrowLeft"] ? 1 : 0);
     let dirY = (keys["ArrowDown"]  ? 1 : 0) - (keys["ArrowUp"]   ? 1 : 0);
 
-    const nextX = this.x + dirX * SPEED * dt;
-    const nextY = this.y + dirY * SPEED * dt;
-
-    const len = Math.hypot(dirX , dirY); // √(dx² + dy²)
+    // Normalisation pour éviter un déplacement diagonal plus rapide
+    const len = Math.hypot(dirX, dirY);
     if (len > 0) {
       dirX /= len;
       dirY /= len;
     }
 
-    // Tests pour chaque axe
-    const testX = { x: nextX, y: this.y, width: this.size, height: this.size };
+    // Calcul du déplacement
+    const moveX = dirX * SPEED * dt;
+    const moveY = dirY * SPEED * dt;
+
+    // Test de collision horizontal
+    const testX = { x: this.x + moveX, y: this.y, width: this.size, height: this.size };
     const wallX = this.collidesWithWall(testX, map, tileSize);
     const playerX = this.collidesWithPlayers(testX, others);
-
     if (!wallX && !playerX) {
-      this.x = nextX;
+      this.x += moveX;
     }
 
-    const testY = { x: this.x, y: nextY, width: this.size, height: this.size };
+    // Test de collision vertical
+    const testY = { x: this.x, y: this.y + moveY, width: this.size, height: this.size };
     const wallY = this.collidesWithWall(testY, map, tileSize);
     const playerY = this.collidesWithPlayers(testY, others);
-
     if (!wallY && !playerY) {
-      this.y = nextY;
+      this.y += moveY;
     }
 
-    // Si bloqué sur les deux axes, on débloque en ignorant la collision joueur sur un axe
+    // Si bloqué sur les deux axes, débloquer en forçant un axe si possible
     const movedX = !wallX && !playerX;
     const movedY = !wallY && !playerY;
     if (!movedX && !movedY && (dirX !== 0 || dirY !== 0)) {
-      // Priorité à l'horizontale si possible
-      if (!wallX) {
-        this.x = nextX;
-      } else if (!wallY) {
-        this.y = nextY;
-      }
+      if (!wallX) this.x += moveX;
+      else if (!wallY) this.y += moveY;
     }
   }
 
