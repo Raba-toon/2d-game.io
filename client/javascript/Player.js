@@ -4,7 +4,7 @@ export class Player {
   constructor(id, color) {
     this.id    = id;
     this.color = color;
-    this.size  = 30;
+    this.size  = 45;
     this.x     = 100;
     this.y     = 100;
     this.lightOn = true;           // 🔆 état de la lampe
