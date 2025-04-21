@@ -128,6 +128,14 @@ export class Player {
     }
   }
 
+  animate(dt) {
+    this.frameTime += dt;
+    if (this.frameTime >= FRAME_DURATION) {
+      this.frameTime -= FRAME_DURATION;
+      this.frame = (this.frame + 1) % FRAME_COUNT;
+    }
+  }
+
   draw(ctx, cameraX = 0, cameraY = 0) {
     // Draw current animation frame
     ctx.drawImage(
