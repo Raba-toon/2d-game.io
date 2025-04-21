@@ -35,28 +35,29 @@ class Player {
     const nextX = this.x + moveX * SPEED * dt;
     const nextY = this.y + moveY * SPEED * dt;
   
-    // 1) Tester le déplacement horizontal
+    // 1) Horizontal test
     const testX = {
-      x: nextX,
-      y: this.y,
-      width: this.size,
+      x:      nextX,
+      y:      this.y,
+      width:  this.size,
       height: this.size
     };
-    if (!collidesWithWall(testX, map)) {
+    if (!this.collidesWithWall(testX, map)) {
       this.x = nextX;
     }
   
-    // 2) Tester le déplacement vertical
+    // 2) Vertical test
     const testY = {
-      x: this.x,
-      y: nextY,
-      width: this.size,
+      x:      this.x,
+      y:      nextY,
+      width:  this.size,
       height: this.size
     };
-    if (!collidesWithWall(testY, map)) {
+    if (!this.collidesWithWall(testY, map)) {
       this.y = nextY;
     }
   }
+  
   
 
   sendPosition(ws) {
