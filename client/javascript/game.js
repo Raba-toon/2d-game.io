@@ -5,13 +5,17 @@ let mapData = null;
 const TILE_SIZE = 60;
 let gridData = null;
 
+function resizeCanvas() {
+  canvas.width = window.innerWidth;
+  canvas.height = window.innerHeight;
+}
+resizeCanvas();
+window.addEventListener('resize', resizeCanvas);
 fetch('/client/json/matrice1.json')
   .then(res => res.json())
   .then(grille => {
     mapData = grille;
     gridData = grille;
-    canvas.width = grille[0].length * TILE_SIZE;
-    canvas.height = grille.length * TILE_SIZE;
     drawGrid();
     requestAnimationFrame(gameLoop);
   })
