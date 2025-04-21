@@ -103,9 +103,14 @@ class Player {
     }
   }
 
-  draw(ctx) {
+  draw(ctx, cameraX = 0, cameraY = 0) {
     ctx.fillStyle = this.color;
-    ctx.fillRect(this.x, this.y, this.size, this.size);
+    ctx.fillRect(
+      this.x - cameraX,
+      this.y - cameraY,
+      this.size,
+      this.size
+    );
   }
 }
 
