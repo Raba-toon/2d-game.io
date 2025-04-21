@@ -58,11 +58,12 @@ class Player {
     const nextX = this.x + dirX * SPEED * dt;
     const nextY = this.y + dirY * SPEED * dt;
 
-    const len = Math.hypot(dx, dy); // √(dx² + dy²)
+    const len = Math.hypot(dirX , dirY); // √(dx² + dy²)
     if (len > 0) {
-      dx /= len;
-      dy /= len;
+      dirX /= len;
+      dirY /= len;
     }
+    
     // Tests pour chaque axe
     const testX = { x: nextX, y: this.y, width: this.size, height: this.size };
     const wallX = this.collidesWithWall(testX, map, tileSize);
