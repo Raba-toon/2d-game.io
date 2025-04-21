@@ -6,11 +6,11 @@ const TILE_SIZE = 60;
 let gridData = null;
 
 function resizeCanvas() {
-  canvas.width = window.innerWidth;
+  canvas.width  = window.innerWidth;
   canvas.height = window.innerHeight;
 }
-resizeCanvas();
 window.addEventListener('resize', resizeCanvas);
+resizeCanvas();
 fetch('/client/json/matrice1.json')
   .then(res => res.json())
   .then(grille => {
