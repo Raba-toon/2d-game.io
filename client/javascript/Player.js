@@ -18,7 +18,8 @@ export class Player {
     this.x = 100;
     this.y = 100;
     this.lightOn = true;       // state of the lamp
-
+    this.isHidden = false;
+    
     // Animation state
     this.frame = 0;
     this.frameTime = 0;
@@ -68,6 +69,8 @@ export class Player {
    * @param {Object} others     other players
    */
   update(keys, dt, map, tileSize, others) {
+    // Empêche tout mouvement si le joueur est caché
+    if (this.isHidden) return;
     // Movement vector
     let dirX = (keys['d'] ? 1 : 0) - (keys['a'] ? 1 : 0);
     let dirY = (keys['s'] ? 1 : 0) - (keys['w'] ? 1 : 0);
@@ -137,6 +140,9 @@ export class Player {
   }
 
   draw(ctx, cameraX = 0, cameraY = 0) {
+    if (this.isHidden) {
+      return; // ne rien dessiner si caché
+    }
     // Draw current animation frame
     ctx.drawImage(
       spriteImage,
