@@ -29,6 +29,7 @@ const LIGHT_RADIUS = 180;          // vision ≈ 3 cases
 let mapData = null;
 let gridData = null;
 let doors = {};  // Utiliser un objet au lieu d'un tableau pour faciliter la synchronisation
+let hidingSpots = {};
 
 const localPlayer = new Player(null, 'blue');  // ID sera défini lors de la connexion
 const others = {};
@@ -203,6 +204,10 @@ function loadMap() {
             const doorKey = `${x},${y}`;
             doors[doorKey] = new Door(x, y, false);
           }
+          if (mapData[y][x] === 3) {
+            const hideKey = `${x},${y}`;
+            hidingSpots[hideKey] = new HidingSpot(x, y);
+          }
         }
       }
 
@@ -235,6 +240,9 @@ function drawGrid(ctx) {
         ctx.fillRect(x * TILE_SIZE, y * TILE_SIZE, TILE_SIZE, TILE_SIZE);
       }
     }
+  }
+  for (const key in hidingSpots) {
+    hidingSpots[key].draw(ctx, TILE_SIZE);
   }
 }
 
@@ -483,6 +491,14 @@ function gameLoop(ts) {
   // Vérification des touches
   if (keys[' '] || keys['Space']) {
     toggleDoorNearPlayer(localPlayer);
+    
+    const tileX = Math.floor((localPlayer.x + localPlayer.size / 2) / TILE_SIZE);
+    const tileY = Math.floor((localPlayer.y + localPlayer.size / 2) / TILE_SIZE);
+    const key = `${tileX},${tileY}`;
+
+    if (hidingSpots[key]) {
+      hidingSpots[key].hidePlayerIfInside(localPlayer, TILE_SIZE, keys);
+    }
     keys[' '] = keys['Space'] = false;
   }
 
