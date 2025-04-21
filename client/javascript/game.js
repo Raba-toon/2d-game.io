@@ -521,10 +521,6 @@ function gameLoop(ts) {
   if (playerInfo.id) {
     localPlayer.update(keys, dt, mapData, TILE_SIZE, others);
     
-    // Vérifie si le joueur est dans une cachette
-    for (const key in hidingSpots) {
-      hidingSpots[key].hidePlayerIfInside(localPlayer, TILE_SIZE);
-    }
     // Envoyer la position au serveur
     if (socket && socket.readyState === WebSocket.OPEN) {
       socket.send(JSON.stringify({
