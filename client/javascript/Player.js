@@ -155,5 +155,11 @@ export class Player {
       this.x - cameraX, this.y - cameraY,
       this.size, this.size
     );
+
+    if (keys['d']) 
+      ctx.scale(-1, 1); // Flip horizontally for right direction
+    else if (keys['a']) 
+      ctx.scale(1, 1); // Normal for left direction
+    
   }
 }
