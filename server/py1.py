@@ -19,6 +19,9 @@ player_names = {}
 # État des portes (clé = "x,y", valeur = True/False pour ouverte/fermée)
 doors: dict[str, bool] = {}
 
+# État des cachettes (clé = "x,y", valeur = True/False pour caché/pas caché)
+hiding_spots: dict[str, bool] = {}
+
 app.mount("/client", StaticFiles(directory="./client"), name="client")
 
 @app.get("/")
@@ -32,7 +35,8 @@ async def broadcast_state():
             payload = {
                 "type": "state",
                 "positions": positions,
-                "doors": doors
+                "doors": doors,
+                "hiding_spots": hiding_spots
             }
             for ws in list(clients):
                 try:
@@ -171,7 +175,12 @@ async def ws_endpoint(ws: WebSocket):
                 door_key = f"{msg['x']},{msg['y']}"
                 doors[door_key] = not doors.get(door_key, False)
                 print(f"Porte {door_key} est maintenant {doors[door_key]}")
-                
+            # Pour hide
+            elif msg.get("type") == "toggleHidingSpot" and ws in player_ids:
+                hide_key = f"{msg['x']},{msg['y']}"
+                hiding_spots[hide_key] = not hiding_spots.get(hide_key, False)
+                print(f"Cachette {hide_key} est maintenant {'occupée' if hiding_spots[hide_key] else 'libre'}")
+
     except Exception as e:
         print(f"Erreur: {e}")
     finally:
