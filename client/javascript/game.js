@@ -75,7 +75,7 @@ function gameLoop(ts) {
   lastTs = ts;
 
   // 2) update + send your player
-  localPlayer.update(keys, dt, mapData, TILE_SIZE);
+  localPlayer.update(keys, dt, mapData, TILE_SIZE, others);
   localPlayer.sendPosition(ws);
 
   // 3) clear canvas
