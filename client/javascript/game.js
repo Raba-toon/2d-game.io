@@ -1,6 +1,7 @@
 /* game.js – version "halo de lumière" */
 import { Door } from './Door.js';
 import { Player } from './Player.js';
+import { HidingSpot } from './Hide.js';
 
 // Variable globale pour stocker les informations du joueur
 let playerInfo = {
@@ -29,6 +30,7 @@ const LIGHT_RADIUS = 180;          // vision ≈ 3 cases
 let mapData = null;
 let gridData = null;
 let doors = {};  // Utiliser un objet au lieu d'un tableau pour faciliter la synchronisation
+let hidingSpots = {};
 
 const localPlayer = new Player(null, 'blue');  // ID sera défini lors de la connexion
 const others = {};
@@ -203,6 +205,10 @@ function loadMap() {
             const doorKey = `${x},${y}`;
             doors[doorKey] = new Door(x, y, false);
           }
+          if (mapData[y][x] === 3) {
+            const key = `${x},${y}`;
+            hidingSpots[key] = new HidingSpot(x, y);
+          }
         }
       }
 
@@ -235,6 +241,11 @@ function drawGrid(ctx) {
         ctx.fillRect(x * TILE_SIZE, y * TILE_SIZE, TILE_SIZE, TILE_SIZE);
       }
     }
+  }
+
+  // 🌿 Dessiner les cachettes
+  for (const key in hidingSpots) {
+    hidingSpots[key].draw(ctx, TILE_SIZE);
   }
 }
 
@@ -280,6 +291,26 @@ function toggleDoorNearPlayer(player) {
         y: y
       }));
       break;
+    }
+  }
+}
+function toggleHidingNearPlayer(player) {
+  for (const key in hidingSpots) {
+    const spot = hidingSpots[key];
+
+    if (spot.isAt(player, TILE_SIZE)) {
+      // Si déjà caché → sortir
+      if (player.isHidden) {
+        player.isHidden = false;
+        spot.isOccupied = false;
+      } 
+      // Sinon → se cacher
+      else if (!spot.isOccupied) {
+        player.isHidden = true;
+        spot.isOccupied = true;
+      }
+
+      break; // Un seul spot à la fois
     }
   }
 }
@@ -482,6 +513,7 @@ function gameLoop(ts) {
 
   // Vérification des touches
   if (keys[' '] || keys['Space']) {
+    toggleHidingNearPlayer(localPlayer);
     toggleDoorNearPlayer(localPlayer);
     keys[' '] = keys['Space'] = false;
   }
@@ -490,6 +522,10 @@ function gameLoop(ts) {
   if (playerInfo.id) {
     localPlayer.update(keys, dt, mapData, TILE_SIZE, others);
     
+    // Vérifie si le joueur est dans une cachette
+    for (const key in hidingSpots) {
+      hidingSpots[key].hidePlayerIfInside(localPlayer, TILE_SIZE);
+    }
     // Envoyer la position au serveur
     if (socket && socket.readyState === WebSocket.OPEN) {
       socket.send(JSON.stringify({
