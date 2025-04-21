@@ -56,8 +56,9 @@ collidesWithWall(rect, map, tileSize) {
    */
   update(keys, dt, map, tileSize, others) {
     // Calcul du vecteur direction
-    let dirX = (keys["ArrowRight"] ? 1 : 0) - (keys["ArrowLeft"] ? 1 : 0);
-    let dirY = (keys["ArrowDown"]  ? 1 : 0) - (keys["ArrowUp"]   ? 1 : 0);
+    let dirX = (keys["d"] ? 1 : 0) - (keys["a"] ? 1 : 0);
+    let dirY = (keys["s"] ? 1 : 0) - (keys["w"] ? 1 : 0);
+
 
     // Normalisation pour éviter un déplacement diagonal plus rapide
     const len = Math.hypot(dirX, dirY);
