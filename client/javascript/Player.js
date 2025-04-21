@@ -1,6 +1,6 @@
 const SPEED = 120;
 
-class Player {
+export class Player {
   constructor(id, color) {
     this.id    = id;
     this.color = color;
@@ -20,21 +20,23 @@ class Player {
   }
 
   // Collision avec un mur de la map
-  collidesWithWall(rect, map, tileSize) {
-    const left   =  Math.floor(rect.x               / tileSize);
-    const right  =  Math.floor((rect.x + rect.width  - 1) / tileSize);
-    const top    =  Math.floor(rect.y               / tileSize);
-    const bottom =  Math.floor((rect.y + rect.height - 1) / tileSize);
+// Dans Player.js
+collidesWithWall(rect, map, tileSize) {
+  const left   =  Math.floor(rect.x               / tileSize);
+  const right  =  Math.floor((rect.x + rect.width  - 1) / tileSize);
+  const top    =  Math.floor(rect.y               / tileSize);
+  const bottom =  Math.floor((rect.y + rect.height - 1) / tileSize);
 
-    for (let y = top; y <= bottom; y++) {
-      for (let x = left; x <= right; x++) {
-        if (map[y]?.[x] === 1) {
-          return true;
-        }
+  for (let y = top; y <= bottom; y++) {
+    for (let x = left; x <= right; x++) {
+      if (map[y]?.[x] === 1 || map[y]?.[x] === 2) {
+        return true;
       }
     }
-    return false;
   }
+  return false;
+}
+
 
   // Collision avec les autres joueurs
   collidesWithPlayers(rect, others) {
