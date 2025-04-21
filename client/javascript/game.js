@@ -87,6 +87,21 @@ const connectWebSocket = () => {
       }
     }
   };
+
+  document.addEventListener('keydown', e => {
+    keys[e.key] = true;
+  
+    // 🔆 Toggle lampe quand on appuie sur "f" ou "F"
+    if ((e.key === 'f' || e.key === 'F') && playerInfo.id) {
+      // inversion côté client (latence quasi nulle)
+      localPlayer.lightOn = !localPlayer.lightOn;
+  
+      if (socket?.readyState === WebSocket.OPEN) {
+        socket.send(JSON.stringify({ type: "toggleLight" }));
+      }
+    }
+  });
+  document.addEventListener('keyup', e => { keys[e.key] = false; });
   
   socket.onmessage = (event) => {
     const data = JSON.parse(event.data);
@@ -149,6 +164,16 @@ const connectWebSocket = () => {
         if (mapData && mapData[y] && mapData[y][x] !== undefined) {
           mapData[y][x] = isOpen ? 0 : 2;
         }
+      }
+      if (data.lights) {
+        Object.entries(data.lights).forEach(([id, isOn]) => {
+          if (id === playerInfo.id) {
+            localPlayer.lightOn = isOn;
+          } else {
+            if (!others[id]) others[id] = new Player(id, 'red');
+            others[id].lightOn = isOn;
+          }
+        });
       }
     }
   };
@@ -216,25 +241,23 @@ function drawGrid(ctx) {
 /* ──────────────────────────────────
    Halo de lumière sur overlay
    ────────────────────────────────── */
-function renderLighting(offsetX, offsetY) {
-  /* 1) voile noir opaque */
-  lightCtx.globalCompositeOperation = "source-over";
-  lightCtx.fillStyle = "black";
-  lightCtx.fillRect(0, 0, lightCan.width, lightCan.height);
-
-  /* 2) chaque cercle découpe un trou */
-  lightCtx.globalCompositeOperation = "destination-out";
-  lightCtx.fillStyle = "white";          // opaque ⇒ supprime le noir
-
-  [localPlayer, ...Object.values(others)].forEach(p => {
-    const cx = p.x - offsetX + p.size / 2;
-    const cy = p.y - offsetY + p.size / 2;
-
-    lightCtx.beginPath();
-    lightCtx.arc(cx, cy, LIGHT_RADIUS, 0, Math.PI * 2);
-    lightCtx.fill();
-  });
-}
+   function renderLighting(offsetX, offsetY) {
+    lightCtx.globalCompositeOperation = "source-over";
+    lightCtx.fillStyle = "black";
+    lightCtx.fillRect(0,0, lightCan.width, lightCan.height);
+  
+    lightCtx.globalCompositeOperation = "destination-out";
+    lightCtx.fillStyle = "white";
+  
+    [localPlayer, ...Object.values(others)].forEach(p => {
+      if (!p.lightOn) return;          // 🔆 on ne dessine pas s’il est éteint
+      const cx = p.x - offsetX + p.size/2;
+      const cy = p.y - offsetY + p.size/2;
+      lightCtx.beginPath();
+      lightCtx.arc(cx, cy, LIGHT_RADIUS, 0, Math.PI*2);
+      lightCtx.fill();
+    });
+  }
 
 /* ──────────────────────────────────
    Intéraction portes
