@@ -7,6 +7,7 @@ class Hunter {
     this.size  = 30;
     this.x     = 100;
     this.y     = 100;
+    this.carriedPlayer = null; // id du joueur transporté
   }
 
   rectsOverlap(a, b) {
@@ -35,10 +36,13 @@ class Hunter {
   }
 
   collidesWithPlayers(rect, others) {
-    return Object.values(others).some(other => {
+    for (const [id, other] of Object.entries(others)) {
       const box = { x: other.x, y: other.y, width: other.size, height: other.size };
-      return this.rectsOverlap(rect, box);
-    });
+      if (this.rectsOverlap(rect, box)) {
+        return id; // retourne l'id du joueur touché
+      }
+    }
+    return null;
   }
 
   update(keys, dt, map, tileSize, others) {
@@ -56,23 +60,33 @@ class Hunter {
 
     const testX = { x: this.x + moveX, y: this.y, width: this.size, height: this.size };
     const wallX = this.collidesWithWall(testX, map, tileSize);
-    const playerX = this.collidesWithPlayers(testX, others);
-    if (!wallX && !playerX) {
+    if (!wallX) {
       this.x += moveX;
     }
 
     const testY = { x: this.x, y: this.y + moveY, width: this.size, height: this.size };
     const wallY = this.collidesWithWall(testY, map, tileSize);
-    const playerY = this.collidesWithPlayers(testY, others);
-    if (!wallY && !playerY) {
+    if (!wallY) {
       this.y += moveY;
     }
 
-    const movedX = !wallX && !playerX;
-    const movedY = !wallY && !playerY;
-    if (!movedX && !movedY && (dirX !== 0 || dirY !== 0)) {
-      if (!wallX) this.x += moveX;
-      else if (!wallY) this.y += moveY;
+    // Si pas encore de joueur attrapé, on teste la collision joueur
+    if (!this.carriedPlayer) {
+      const overlapId = this.collidesWithPlayers({ x: this.x, y: this.y, width: this.size, height: this.size }, others);
+      if (overlapId) {
+        this.carriedPlayer = overlapId;
+        if (others[overlapId]) {
+          others[overlapId].isCarried = true;
+          others[overlapId].color = "purple"; // couleur différente pour le joueur attrapé
+        }
+      }
+    }
+
+    // Si on transporte un joueur, on le positionne exactement sur le Hunter
+    if (this.carriedPlayer && others[this.carriedPlayer]) {
+      const carried = others[this.carriedPlayer];
+      carried.x = this.x;
+      carried.y = this.y;
     }
   }
 
