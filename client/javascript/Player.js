@@ -152,6 +152,16 @@ export class Player {
     }
   
     ctx.imageSmoothingEnabled = false;
+
+    if (this.direction == 'left') {
+      ctx.save(); // Save the current state
+      ctx.scale(-1, 1); // Flip horizontally for left direction
+      ctx.translate(-this.x - this.size, 0); // Translate to the left position
+    }
+      
+    else if (this.direction == 'right') {
+      ctx.restore(); // Restore to original state if previously flipped
+    }
   
     ctx.drawImage(
       spriteImage,
@@ -161,10 +171,7 @@ export class Player {
       this.size, this.size
     );
 
-    if (this.direction == 'left') 
-      ctx.scale(-1, 1); // Flip horizontally for right direction
-    else if (this.direction == 'right') 
-      ctx.scale(1, 1); // Normal for left direction
+    
     
   }
 }
