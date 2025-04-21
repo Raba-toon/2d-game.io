@@ -10,10 +10,16 @@ export class Door {
   }
 
   isNear(player, tileSize) {
-      const playerTileX = Math.floor((player.x + player.size / 2) / tileSize);
-      const playerTileY = Math.floor((player.y + player.size / 2) / tileSize);
-      return Math.abs(playerTileX - this.x) <= 1 && Math.abs(playerTileY - this.y) <= 1;
-  }
+    const playerTileX = Math.floor((player.x + player.size / 2) / tileSize);
+    const playerTileY = Math.floor((player.y + player.size / 2) / tileSize);
+    const dx = Math.abs(playerTileX - this.x);
+    const dy = Math.abs(playerTileY - this.y);
+
+    // Uniquement adjacent horizontalement ou verticalement (pas en diagonale)
+    return (dx + dy === 1);
+}
+
+
 
   draw(ctx, tileSize) {
       ctx.fillStyle = this.isOpen ? "#555" : "sienna"; // gris clair si ouvert, brun si fermé
