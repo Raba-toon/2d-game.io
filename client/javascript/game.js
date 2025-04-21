@@ -155,8 +155,7 @@ const connectWebSocket = () => {
       for (const [id, pos] of Object.entries(data.positions)) {
         if (id === playerInfo.id) continue;
         if (!others[id]) others[id] = new Player(id, 'red');
-        others[id].x = pos.x;
-        others[id].y = pos.y;
+        others[id].setPositionFromServer(pos.x, pos.y);
       }
 
       // Synchroniser état des portes
