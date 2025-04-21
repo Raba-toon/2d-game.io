@@ -546,11 +546,17 @@ function gameLoop(ts) {
     const offY = localPlayer.y - gameCan.height / 2 + localPlayer.size / 2;
 
     gameCtx.save();
-      gameCtx.translate(-offX, -offY);
-      drawGrid(gameCtx);
-      localPlayer.draw(gameCtx);
-      Object.values(others).forEach(p => p.draw(gameCtx));
-    gameCtx.restore();
+    gameCtx.translate(-offX, -offY);
+    drawGrid(gameCtx);
+    localPlayer.draw(gameCtx);
+
+    // animer puis dessiner chaque joueur distant
+    Object.values(others).forEach(p => {
+      p.animate(dt);
+      p.draw(gameCtx);
+    });
+  gameCtx.restore();
+
 
     // Appliquer l'effet de halo de lumière
     renderLighting(offX, offY);

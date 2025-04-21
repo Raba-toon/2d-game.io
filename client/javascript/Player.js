@@ -1,16 +1,26 @@
+/* Player.js with sprite-based animation */
+
 const SPEED = 120;
+const SPRITE_WIDTH = 32;
+const SPRITE_HEIGHT = 32;
+const FRAME_COUNT = 18;
+const FRAME_DURATION = 0.1; // seconds per frame
+
+// Load the sprite sheet (update the path to your sprite image)
+const spriteImage = new Image();
+spriteImage.src = '/client/images/players/baby-crawl-white.png';
 
 export class Player {
   constructor(id, color) {
-    this.id    = id;
+    this.id = id;
     this.color = color;
-    this.size  = 45;
+    this.size  = 30;
     this.x     = 100;
     this.y     = 100;
     this.lightOn = true;           // 🔆 état de la lampe
   }
 
-  // Vérifie si deux rectangles se chevauchent
+  // Check if two rectangles overlap
   rectsOverlap(a, b) {
     return !(  
       a.x + a.width  <= b.x ||
@@ -20,26 +30,24 @@ export class Player {
     );
   }
 
-  // Collision avec un mur de la map
-// Dans Player.js
-collidesWithWall(rect, map, tileSize) {
-  const left   =  Math.floor(rect.x               / tileSize);
-  const right  =  Math.floor((rect.x + rect.width  - 1) / tileSize);
-  const top    =  Math.floor(rect.y               / tileSize);
-  const bottom =  Math.floor((rect.y + rect.height - 1) / tileSize);
+  // Collision with walls
+  collidesWithWall(rect, map, tileSize) {
+    const left   = Math.floor(rect.x / tileSize);
+    const right  = Math.floor((rect.x + rect.width - 1) / tileSize);
+    const top    = Math.floor(rect.y / tileSize);
+    const bottom = Math.floor((rect.y + rect.height - 1) / tileSize);
 
-  for (let y = top; y <= bottom; y++) {
-    for (let x = left; x <= right; x++) {
-      if (map[y]?.[x] === 1 || map[y]?.[x] === 2) {
-        return true;
+    for (let y = top; y <= bottom; y++) {
+      for (let x = left; x <= right; x++) {
+        if (map[y]?.[x] === 1 || map[y]?.[x] === 2) {
+          return true;
+        }
       }
     }
+    return false;
   }
-  return false;
-}
 
-
-  // Collision avec les autres joueurs
+  // Collision with other players
   collidesWithPlayers(rect, others) {
     return Object.values(others).some(other => {
       const box = { x: other.x, y: other.y, width: other.size, height: other.size };
@@ -48,30 +56,30 @@ collidesWithWall(rect, map, tileSize) {
   }
 
   /**
-   * @param {Object} keys       état des touches
-   * @param {number} dt         delta-time en secondes
-   * @param {Array}  map        grille de la carte
-   * @param {number} tileSize   taille d'une case en px
-   * @param {Object} others     mapping id→Player pour collision joueurs
+   * Update player position and animation
+   * @param {Object} keys       keys state
+   * @param {number} dt         delta-time in seconds
+   * @param {Array}  map        map grid
+   * @param {number} tileSize   tile size in px
+   * @param {Object} others     other players
    */
   update(keys, dt, map, tileSize, others) {
-    // Calcul du vecteur direction
-    let dirX = (keys["d"] ? 1 : 0) - (keys["a"] ? 1 : 0);
-    let dirY = (keys["s"] ? 1 : 0) - (keys["w"] ? 1 : 0);
+    // Movement vector
+    let dirX = (keys['d'] ? 1 : 0) - (keys['a'] ? 1 : 0);
+    let dirY = (keys['s'] ? 1 : 0) - (keys['w'] ? 1 : 0);
 
-
-    // Normalisation pour éviter un déplacement diagonal plus rapide
+    // Normalize diagonal
     const len = Math.hypot(dirX, dirY);
     if (len > 0) {
       dirX /= len;
       dirY /= len;
     }
 
-    // Calcul du déplacement
+    // Compute movement
     const moveX = dirX * SPEED * dt;
     const moveY = dirY * SPEED * dt;
 
-    // Test de collision horizontal
+    // Horizontal collision
     const testX = { x: this.x + moveX, y: this.y, width: this.size, height: this.size };
     const wallX = this.collidesWithWall(testX, map, tileSize);
     const playerX = this.collidesWithPlayers(testX, others);
@@ -79,7 +87,7 @@ collidesWithWall(rect, map, tileSize) {
       this.x += moveX;
     }
 
-    // Test de collision vertical
+    // Vertical collision
     const testY = { x: this.x, y: this.y + moveY, width: this.size, height: this.size };
     const wallY = this.collidesWithWall(testY, map, tileSize);
     const playerY = this.collidesWithPlayers(testY, others);
@@ -87,36 +95,51 @@ collidesWithWall(rect, map, tileSize) {
       this.y += moveY;
     }
 
-    // Si bloqué sur les deux axes, débloquer en forçant un axe si possible
+    // Unstick if blocked both ways
     const movedX = !wallX && !playerX;
     const movedY = !wallY && !playerY;
     if (!movedX && !movedY && (dirX !== 0 || dirY !== 0)) {
       if (!wallX) this.x += moveX;
       else if (!wallY) this.y += moveY;
     }
+
+    // Animation: advance frames when moving
+    const moving = dirX !== 0 || dirY !== 0;
+    if (moving) {
+      this.frameTime += dt;
+      if (this.frameTime >= FRAME_DURATION) {
+        this.frameTime -= FRAME_DURATION;
+        this.frame = (this.frame + 1) % FRAME_COUNT;
+      }
+    } else {
+      // Idle frame
+      this.frame = 0;
+      this.frameTime = 0;
+    }
   }
 
   sendPosition(ws) {
     if (ws.readyState === WebSocket.OPEN) {
-      ws.send(JSON.stringify({
-        type: "position",
-        id:   this.id,
-        x:    this.x,
-        y:    this.y
-      }));
+      ws.send(JSON.stringify({ type: 'position', id: this.id, x: this.x, y: this.y }));
+    }
+  }
+
+  animate(dt) {
+    this.frameTime += dt;
+    if (this.frameTime >= FRAME_DURATION) {
+      this.frameTime -= FRAME_DURATION;
+      this.frame = (this.frame + 1) % FRAME_COUNT;
     }
   }
 
   draw(ctx, cameraX = 0, cameraY = 0) {
-    ctx.fillStyle = this.color;
-    ctx.fillRect(
-      this.x - cameraX,
-      this.y - cameraY,
-      this.size,
-      this.size
+    // Draw current animation frame
+    ctx.drawImage(
+      spriteImage,
+      this.frame * SPRITE_WIDTH, 0,
+      SPRITE_WIDTH, SPRITE_HEIGHT,
+      this.x - cameraX, this.y - cameraY,
+      this.size, this.size
     );
   }
 }
-
-// Assurez-vous d'exposer Player si vous utilisez modules
-// export { Player };
