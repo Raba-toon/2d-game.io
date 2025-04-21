@@ -297,7 +297,7 @@ function toggleHidingNearPlayer(player) {
   for (const key in hidingSpots) {
     const spot = hidingSpots[key];
 
-    if (spot.isNear(player, TILE_SIZE)) {
+    if (spot.isNear(player, TILE_SIZE)) { // ✅ maintenant vérifie la *proximité*
       if (player.isHidden) {
         player.isHidden = false;
         spot.isOccupied = false;
@@ -305,7 +305,7 @@ function toggleHidingNearPlayer(player) {
         player.isHidden = true;
         spot.isOccupied = true;
       }
-      break; // Une seule cachette à la fois
+      break;
     }
   }
 }
