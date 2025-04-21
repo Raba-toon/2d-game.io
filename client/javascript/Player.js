@@ -136,7 +136,11 @@ export class Player {
     }
   }
 
+
   draw(ctx, cameraX = 0, cameraY = 0) {
+    //ENLEVE LE CRISS DE FLOU
+    ctx.imageSmoothingEnabled = false;
+
     // Draw current animation frame
     ctx.drawImage(
       spriteImage,
