@@ -14,7 +14,7 @@ export class Player {
   constructor(id, color) {
     this.id = id;
     this.color = color;
-    this.size = SPRITE_WIDTH;  // draw size (can scale)
+    this.size = SPRITE_WIDTH * 1.5;  // draw size (can scale)
     this.x = 100;
     this.y = 100;
     this.lightOn = true;       // state of the lamp
