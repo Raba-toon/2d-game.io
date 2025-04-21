@@ -11,15 +11,20 @@ let gridData = null;
 fetch('/client/json/matrice1.json')
   .then(res => res.json())
   .then(grille => {
-    mapData = grille; 
-    drawGrid(grille);
+    mapData  = grille;
     gridData = grille;
-    // ajuste la taille du canvas si besoin :
     canvas.width  = grille[0].length * TILE_SIZE;
     canvas.height = grille.length    * TILE_SIZE;
+
+    // draw once immediately
+    drawGrid();
+
+    // then start the loop (no darkness, just grid+players)
     requestAnimationFrame(gameLoop);
   })
   .catch(err => console.error("Erreur chargement grille :", err));
+
+
 
 // 2) Fonction qui dessine la grille (appelée chaque frame)
 function drawGrid() {
@@ -65,23 +70,26 @@ ws.onerror = err => console.error("WS erreur :", err);
 
 // 4) Boucle de jeu
 function gameLoop(ts) {
-  const dt = (ts - lastTs)/1000;
+  // 1) compute delta‑time
+  const dt = (ts - lastTs) / 1000;
   lastTs = ts;
 
+  // 2) update + send your player
   localPlayer.update(keys, dt, mapData);
-  // MAJ + envoi position
   localPlayer.sendPosition(ws);
 
-  // 1) Efface tout
+  // 3) clear canvas
   ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-  // 2) DESSINE D’ABORD LA GRILLE
+  // 4) draw the grid each frame
   if (gridData) drawGrid();
 
-  // 3) PUIS LES JOUEURS
+  // 5) draw local player + others
   localPlayer.draw(ctx);
   Object.values(others).forEach(p => p.draw(ctx));
 
-  // 4) Prochaine frame
+  // 6) schedule next frame
   requestAnimationFrame(gameLoop);
 }
+
+

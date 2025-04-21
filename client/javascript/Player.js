@@ -5,8 +5,9 @@ class Player {
   constructor(id, color) {
     this.id     = id;
     this.color  = color;
-    this.x      = 50;
-    this.y      = 50;
+    this.size  = 30;  
+    this.x      = 100;
+    this.y      = 100;
     this.speed = 5;
   }
 
@@ -30,16 +31,18 @@ class Player {
   }
 
   sendPosition(ws) {
-    ws.send(JSON.stringify({
-      type: "position",
-      id:   this.id,
-      x:    this.x,
-      y:    this.y
-    }));
+    if (ws.readyState === WebSocket.OPEN) {
+      ws.send(JSON.stringify({
+        type: "position",
+        id:   this.id,
+        x:    this.x,
+        y:    this.y
+      }));
+    }
   }
 
-  draw() {
+  draw(ctx) {
     ctx.fillStyle = this.color;
-    ctx.fillRect(this.x, this.y, SIZE, SIZE);
+    ctx.fillRect(this.x, this.y, this.size, this.size);
   }
 }
