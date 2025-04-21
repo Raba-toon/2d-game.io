@@ -5,6 +5,7 @@ const ctx = canvas.getContext('2d');
 
 const TILE_SIZE = 60;
 let mapData = null;
+
 let gridData = null;
 
 // --- Canvas responsive ---
@@ -21,6 +22,13 @@ fetch('/client/json/matrice1.json')
   .then(grille => {
     mapData = grille;
     gridData = grille;
+    canvas.width  = grille[0].length * TILE_SIZE;
+    canvas.height = grille.length    * TILE_SIZE;
+
+    // draw once immediately
+    drawGrid();
+
+    // then start the loop
     requestAnimationFrame(gameLoop);
   })
   .catch(err => console.error("Erreur chargement grille :", err));
@@ -55,7 +63,6 @@ const others = {};
 const keys = {};
 document.addEventListener("keydown", e => { keys[e.key] = true; });
 document.addEventListener("keyup",   e => { keys[e.key] = false; });
-
 const protocol = window.location.protocol === "https:" ? "wss" : "ws";
 const ws = new WebSocket(`${protocol}://${window.location.host}/ws`);
 
