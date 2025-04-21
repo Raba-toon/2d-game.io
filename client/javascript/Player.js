@@ -20,6 +20,8 @@ export class Player {
     this.lightOn = true;       // state of the lamp
     this.isHidden = false;
 
+    this.direction = "right";  // default direction
+
     // Animation state
     this.frame = 0;
     this.frameTime = 0;
@@ -73,6 +75,9 @@ export class Player {
     // Movement vector
     let dirX = (keys['d'] ? 1 : 0) - (keys['a'] ? 1 : 0);
     let dirY = (keys['s'] ? 1 : 0) - (keys['w'] ? 1 : 0);
+
+    if (keys['d']) this.direction = 'right';
+    else if (keys['a']) this.direction = 'left';
 
     // Normalize diagonal
     const len = Math.hypot(dirX, dirY);
@@ -156,9 +161,9 @@ export class Player {
       this.size, this.size
     );
 
-    if (keys['d']) 
+    if (this.direction == 'left') 
       ctx.scale(-1, 1); // Flip horizontally for right direction
-    else if (keys['a']) 
+    else if (this.direction == 'right') 
       ctx.scale(1, 1); // Normal for left direction
     
   }
