@@ -242,7 +242,6 @@ function drawGrid(ctx) {
       }
     }
   }
-
   // 🌿 Dessiner les cachettes
   for (const key in hidingSpots) {
     hidingSpots[key].draw(ctx, TILE_SIZE);
@@ -298,19 +297,15 @@ function toggleHidingNearPlayer(player) {
   for (const key in hidingSpots) {
     const spot = hidingSpots[key];
 
-    if (spot.isAt(player, TILE_SIZE)) {
-      // Si déjà caché → sortir
+    if (spot.isNear(player, TILE_SIZE)) {
       if (player.isHidden) {
         player.isHidden = false;
         spot.isOccupied = false;
-      } 
-      // Sinon → se cacher
-      else if (!spot.isOccupied) {
+      } else if (!spot.isOccupied) {
         player.isHidden = true;
         spot.isOccupied = true;
       }
-
-      break; // Un seul spot à la fois
+      break; // Une seule cachette à la fois
     }
   }
 }
@@ -522,10 +517,6 @@ function gameLoop(ts) {
   if (playerInfo.id) {
     localPlayer.update(keys, dt, mapData, TILE_SIZE, others);
     
-    // Vérifie si le joueur est dans une cachette
-    for (const key in hidingSpots) {
-      hidingSpots[key].hidePlayerIfInside(localPlayer, TILE_SIZE);
-    }
     // Envoyer la position au serveur
     if (socket && socket.readyState === WebSocket.OPEN) {
       socket.send(JSON.stringify({
