@@ -1,3 +1,4 @@
+/* game.js – version "halo de lumière" */
 import { Door } from './Door.js';
 import { Player } from './Player.js';
 
@@ -10,11 +11,22 @@ let playerInfo = {
 // Liste des joueurs connectés
 let connectedPlayers = {};
 
-const canvas = document.getElementById('gameCanvas');
-const ctx = canvas.getContext('2d');
+/* ──────────────────────────────────
+   Canvas principaux
+   ────────────────────────────────── */
+const gameCan = document.getElementById('gameCanvas');
+const gameCtx = gameCan.getContext('2d');
+
+const lightCan = document.getElementById('lightCanvas'); // <-- overlay
+const lightCtx = lightCan.getContext('2d');
+
+/* ──────────────────────────────────
+   Constantes & état
+   ────────────────────────────────── */
+const TILE_SIZE = 60;
+const LIGHT_RADIUS = 180;          // vision ≈ 3 cases
 
 let mapData = null;
-const TILE_SIZE = 60;
 let gridData = null;
 let doors = {};  // Utiliser un objet au lieu d'un tableau pour faciliter la synchronisation
 
@@ -22,18 +34,29 @@ const localPlayer = new Player(null, 'blue');  // ID sera défini lors de la con
 const others = {};
 const keys = {};
 
+/* ──────────────────────────────────
+   Gestion clavier
+   ────────────────────────────────── */
 document.addEventListener('keydown', e => { keys[e.key] = true; });
 document.addEventListener('keyup', e => { keys[e.key] = false; });
 
-// Établir la connexion WebSocket
-let socket = null;
-
+/* ──────────────────────────────────
+   Resize canvases
+   ────────────────────────────────── */
 function resizeCanvas() {
-  canvas.width = window.innerWidth;
-  canvas.height = window.innerHeight;
+  const w = window.innerWidth;
+  const h = window.innerHeight;
+  gameCan.width = lightCan.width = w;
+  gameCan.height = lightCan.height = h;
 }
 window.addEventListener('resize', resizeCanvas);
 resizeCanvas();
+
+/* ──────────────────────────────────
+   WebSocket connection
+   ────────────────────────────────── */
+let socket = null;
+let lastTs = performance.now();
 
 const connectWebSocket = () => {
   const wsProtocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
@@ -139,6 +162,9 @@ const connectWebSocket = () => {
   };
 };
 
+/* ──────────────────────────────────
+   Chargement de la map & portes
+   ────────────────────────────────── */
 function loadMap() {
   fetch('/client/json/matrice1.json')
     .then(res => res.json())
@@ -150,7 +176,7 @@ function loadMap() {
         for (let x = 0; x < mapData[y].length; x++) {
           if (mapData[y][x] === 2) {
             const doorKey = `${x},${y}`;
-            doors[doorKey] = false;
+            doors[doorKey] = new Door(x, y, false);
           }
         }
       }
@@ -159,6 +185,60 @@ function loadMap() {
     });
 }
 
+/* ──────────────────────────────────
+   Helpers dessin
+   ────────────────────────────────── */
+function drawGrid(ctx) {
+  for (let y = 0; y < gridData.length; y++) {
+    for (let x = 0; x < gridData[y].length; x++) {
+      ctx.fillStyle = gridData[y][x] === 1 ? "#333" : "#eee";
+      ctx.fillRect(x * TILE_SIZE, y * TILE_SIZE, TILE_SIZE, TILE_SIZE);
+    }
+  }
+  
+  // Dessiner les portes
+  for (const key in doors) {
+    const [x, y] = key.split(',').map(Number);
+    const door = doors[key];
+    if (door instanceof Door) {
+      door.draw(ctx, TILE_SIZE);
+    } else {
+      // Si on n'a pas d'objet Door, on dessine une porte basique
+      const isOpen = door === true;
+      if (!isOpen) {
+        ctx.fillStyle = '#8B4513'; // Porte fermée (marron)
+        ctx.fillRect(x * TILE_SIZE, y * TILE_SIZE, TILE_SIZE, TILE_SIZE);
+      }
+    }
+  }
+}
+
+/* ──────────────────────────────────
+   Halo de lumière sur overlay
+   ────────────────────────────────── */
+function renderLighting(offsetX, offsetY) {
+  /* 1) voile noir opaque */
+  lightCtx.globalCompositeOperation = "source-over";
+  lightCtx.fillStyle = "black";
+  lightCtx.fillRect(0, 0, lightCan.width, lightCan.height);
+
+  /* 2) chaque cercle découpe un trou */
+  lightCtx.globalCompositeOperation = "destination-out";
+  lightCtx.fillStyle = "white";          // opaque ⇒ supprime le noir
+
+  [localPlayer, ...Object.values(others)].forEach(p => {
+    const cx = p.x - offsetX + p.size / 2;
+    const cy = p.y - offsetY + p.size / 2;
+
+    lightCtx.beginPath();
+    lightCtx.arc(cx, cy, LIGHT_RADIUS, 0, Math.PI * 2);
+    lightCtx.fill();
+  });
+}
+
+/* ──────────────────────────────────
+   Intéraction portes
+   ────────────────────────────────── */
 function toggleDoorNearPlayer(player) {
   for (const doorKey in doors) {
     const [x, y] = doorKey.split(',').map(Number);
@@ -177,22 +257,6 @@ function toggleDoorNearPlayer(player) {
         y: y
       }));
       break;
-    }
-  }
-}
-
-function drawGrid() {
-  for (let y = 0; y < gridData.length; y++) {
-    for (let x = 0; x < gridData[y].length; x++) {
-      if (gridData[y][x] === 1) ctx.fillStyle = '#333';
-      else ctx.fillStyle = '#eee';
-      ctx.fillRect(x * TILE_SIZE, y * TILE_SIZE, TILE_SIZE, TILE_SIZE);
-      
-      // Dessiner les portes
-      if (mapData[y][x] === 2) {
-        ctx.fillStyle = '#8B4513'; // Porte fermée (marron)
-        ctx.fillRect(x * TILE_SIZE, y * TILE_SIZE, TILE_SIZE, TILE_SIZE);
-      }
     }
   }
 }
@@ -386,8 +450,9 @@ const setup_login = () => {
   input_name.focus();
 };
 
-let lastTs = performance.now();
-
+/* ──────────────────────────────────
+   Boucle principale
+   ────────────────────────────────── */
 function gameLoop(ts) {
   const dt = (ts - lastTs) / 1000;
   lastTs = ts;
@@ -412,20 +477,24 @@ function gameLoop(ts) {
     }
   }
 
-  ctx.clearRect(0, 0, canvas.width, canvas.height);
+  // Clear canvas principal
+  gameCtx.clearRect(0, 0, gameCan.width, gameCan.height);
 
   // Ne dessiner le jeu que si la carte est chargée et joueur est connecté
   if (mapData && playerInfo.id) {
     // Gestion de la caméra centrée sur le joueur
-    const offsetX = localPlayer.x - canvas.width / 2 + localPlayer.size / 2;
-    const offsetY = localPlayer.y - canvas.height / 2 + localPlayer.size / 2;
+    const offX = localPlayer.x - gameCan.width / 2 + localPlayer.size / 2;
+    const offY = localPlayer.y - gameCan.height / 2 + localPlayer.size / 2;
 
-    ctx.save();
-      ctx.translate(-offsetX, -offsetY);
-      drawGrid();
-      localPlayer.draw(ctx);
-      Object.values(others).forEach(p => p.draw(ctx));
-    ctx.restore();
+    gameCtx.save();
+      gameCtx.translate(-offX, -offY);
+      drawGrid(gameCtx);
+      localPlayer.draw(gameCtx);
+      Object.values(others).forEach(p => p.draw(gameCtx));
+    gameCtx.restore();
+
+    // Appliquer l'effet de halo de lumière
+    renderLighting(offX, offY);
   }
 
   requestAnimationFrame(gameLoop);
