@@ -109,6 +109,14 @@ export class Player {
     }
   }
 
+  setPositionFromServer(newX, newY) {
+    if (newX > this.x)      this.facingRight = true;
+    else if (newX < this.x) this.facingRight = false;
+
+    this.x = newX;
+    this.y = newY;
+  }
+
   animate(dt) {
     this.frameTime += dt;
     if (this.frameTime >= FRAME_DURATION) {
