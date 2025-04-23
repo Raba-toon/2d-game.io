@@ -7,6 +7,106 @@
   <script src="./client/javascript/Player.js" defer></script>
   <script src="./client/javascript/game.js" type="module" defer></script>
 
+  <script type="module">
+    window.startNewSystem = async function() {
+      try {
+        // Charger les modules de base
+        const { EventEmitter } = await import('/client/js/core/EventEmitter.js');
+        const { GameState } = await import('/client/js/core/GameState.js');
+        const { RenderSystem } = await import('/client/js/systems/RenderSystem.js');
+        
+        // Créer les instances de base
+        window.gameEvents = new EventEmitter();
+        window.gameState = new GameState(window.gameEvents);
+        window.renderSystem = new RenderSystem(window.gameState, window.gameEvents);
+        
+        console.log("Nouveau système chargé avec succès!");
+        return true;
+      } catch (error) {
+        console.error("Erreur lors du chargement des modules:", error);
+        return false;
+      }
+    };
+  </script>
+  <script type="module">
+    // Ajouter après window.startNewSystem
+    
+    window.syncWithOldSystem = function() {
+      // S'assurer que le nouveau système est chargé
+      if (!window.gameState) return false;
+      
+      // Synchroniser les données du joueur
+      if (window.playerInfo && window.playerInfo.id) {
+        window.gameState.setPlayerInfo({
+          id: window.playerInfo.id,
+          username: window.playerInfo.username
+        });
+        
+        // Synchroniser la position du joueur
+        if (window.localPlayer) {
+          window.gameState.localPlayer.x = window.localPlayer.x;
+          window.gameState.localPlayer.y = window.localPlayer.y;
+          window.gameState.localPlayer.lightOn = window.localPlayer.lightOn;
+        }
+      }
+      
+      // Synchroniser les autres joueurs
+      if (window.others) {
+        Object.entries(window.others).forEach(([id, player]) => {
+          window.gameState.updateRemotePlayer(id, {
+            x: player.x,
+            y: player.y,
+            lightOn: player.lightOn,
+            isHidden: player.isHidden
+          });
+        });
+      }
+      
+      console.log("Synchronisation avec l'ancien système effectuée");
+      return true;
+    };
+  </script>
+
+  <script>
+    // Ajouter ce script après vos autres scripts (pas besoin de type="module")
+    
+    function addTestButton() {
+      const button = document.createElement('button');
+      button.id = 'test-new-system';
+      button.textContent = 'Tester nouveau système';
+      button.style.position = 'absolute';
+      button.style.bottom = '10px';
+      button.style.left = '10px';
+      button.style.zIndex = '9999';
+      button.style.padding = '5px 10px';
+      
+      button.addEventListener('click', async () => {
+        // Démarrer et synchroniser
+        const started = await window.startNewSystem();
+        if (started) {
+          window.syncWithOldSystem();
+          button.textContent = 'Système chargé!';
+          
+          // Activer le rendu du nouveau système (à côté de l'ancien)
+          if (window.renderSystem) {
+            window.renderSystem.startDebugRender();
+          }
+        }
+      });
+      
+      document.body.appendChild(button);
+    }
+    
+    // Appeler cette fonction après le chargement de la page
+    window.addEventListener('load', () => {
+      // Attendre que le jeu soit initialisé
+      setTimeout(addTestButton, 1000);
+    });
+  </script>
+
+  
+
+
   <link rel="stylesheet" href="./client/css/index.css" />
 </head>
 <body>

@@ -36,6 +36,10 @@ const localPlayer = new Player(null, 'blue');  // ID sera défini lors de la con
 const others = {};
 const keys = {};
 
+
+
+
+
 /* ──────────────────────────────────
    Gestion clavier
    ────────────────────────────────── */
