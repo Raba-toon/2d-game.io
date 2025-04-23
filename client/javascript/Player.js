@@ -18,6 +18,8 @@ export class Player {
     this.x = 100;
     this.y = 100;
     this.lightOn = true;       // state of the lamp
+    this.isHidden = false;
+    
     this.facingRight = true;
 
     // Animation state
@@ -69,6 +71,7 @@ export class Player {
    * @param {Object} others     other players
    */
   update(keys, dt, map, /** tileSize */ tileSize, others) {   // ←← renommé
+    
     let dirX = (keys['d'] ? 1 : 0) - (keys['a'] ? 1 : 0);
     let dirY = (keys['s'] ? 1 : 0) - (keys['w'] ? 1 : 0);
 
@@ -123,6 +126,8 @@ export class Player {
   }
 
   draw(ctx, camX = 0, camY = 0) {
+    if(this.isHidden)
+      return;
     ctx.save();
     if (!this.facingRight) {
       ctx.translate(this.x - camX + this.size, this.y - camY);
