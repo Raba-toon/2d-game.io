@@ -8,7 +8,7 @@ import { CollisionSystem } from '/systems/CollisionSystem.js';
 import { UIManager } from '/ui/UIManager.js';
 import { AssetLoader } from '/utils/AssetLoader.js';
 import { MapLoader } from '/utils/MapLoader.js';
-import { TILE_SIZE, LIGHT_RADIUS } from '../utils/Constants.js';
+import { TILE_SIZE, LIGHT_RADIUS } from '/utils/Constants.js';
 
 /**
  * Classe principale du jeu qui coordonne tous les systèmes

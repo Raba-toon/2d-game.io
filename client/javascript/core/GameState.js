@@ -277,7 +277,7 @@ export class GameState {
   /**
    * Ajoute une hunter dans la liste des hunters
    * @param {number} id 
-   * @returns {Hunter}
+   * @returns {*} Class Hunter
    */
   addHunter(id) {
     const hunter = new Hunter(id);
