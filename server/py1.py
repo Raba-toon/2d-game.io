@@ -1,5 +1,5 @@
 import asyncio, json, uuid                            # 🔆
-from fastapi import FastAPI, WebSocket
+from fastapi import FastAPI, WebSocket, Request
 from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
 import uvicorn
@@ -11,10 +11,15 @@ positions: dict[str, dict]       = {}
 player_ids: dict[WebSocket, str] = {}
 player_names: dict[str, str]     = {}
 doors: dict[str, bool]           = {}
-hiding_spots: dict[str, bool] = {}
+hiding_spots: dict[str, bool]    = {}
 # --- NEW: état des lampes ---------------------------------------------- 🔆
-lights: dict[str, bool]          = {}   # id → True (allumée) / False (éteinte)
+lights: dict[str, bool]          = {}   # id → True (allumée) / False (éteinte)
+# --- NEW: suivi des déconnexions volontaires --------------------------
+logged_out_players: set[str] = set()  # IDs des joueurs qui se sont déconnectés volontairement
 # ------------------------------------------------------------------------
+
+# Position par défaut pour les nouveaux joueurs
+DEFAULT_POSITION = {"x": 100, "y": 100}
 
 app.mount("/client", StaticFiles(directory="./client"), name="client")
 
@@ -66,7 +71,7 @@ async def ws_endpoint(ws: WebSocket):
                     player_id = str(uuid.uuid4())
                     player_ids[ws] = player_id
                     player_names[player_id] = username
-                    positions[player_id] = {"x": 100, "y": 100}
+                    positions[player_id] = DEFAULT_POSITION.copy()
                     lights[player_id] = True                  # 🔆 lampe allumée par défaut
                     await ws.send_json({
                         "type": "login_response",
@@ -82,29 +87,63 @@ async def ws_endpoint(ws: WebSocket):
             # ------------------ reconnexion ------------------------------
             elif msg.get("type") == "reconnect":
                 requested_id = msg.get("player_id")
-                username     = msg.get("username")
-                # (même logique qu’avant, on ajoute juste lights)
-                already_active = any(active_id == requested_id and active_ws!=ws
-                                     for active_ws,active_id in player_ids.items())
+                username = msg.get("username")
+                is_full_refresh = msg.get("fullRefresh", False)  # Nouveau paramètre pour Ctrl+F5
+                
+                # Vérifier si le joueur est déjà connecté ailleurs
+                already_active = any(active_id == requested_id and active_ws != ws
+                                    for active_ws, active_id in player_ids.items())
+                
                 if already_active:
                     await ws.send_json({"type":"reconnect_response","success":False,"message":"Session déjà active"})
                 else:
                     player_id = requested_id
                     player_ids[ws] = player_id
                     player_names.setdefault(player_id, username)
-                    positions.setdefault(player_id, {"x":100,"y":100})
-                    lights.setdefault(player_id, True)        # 🔆
-                    await ws.send_json({"type":"reconnect_response","success":True,
-                                        "player_id":player_id,"username":username})
-                    print(f"{username} reconnecté (ID {player_id})")
+                    
+                    # Vérifier si le joueur était déconnecté volontairement
+                    was_logged_out = player_id in logged_out_players
+                    
+                    # Déterminer la position initiale
+                    if is_full_refresh or was_logged_out:
+                        # Réinitialiser la position pour Ctrl+F5 ou après déconnexion volontaire
+                        positions[player_id] = DEFAULT_POSITION.copy()
+                        print(f"{username} reconnecté avec position par défaut (ID {player_id})")
+                    else:
+                        # Conserver la position existante ou utiliser la position par défaut
+                        if player_id not in positions:
+                            positions[player_id] = DEFAULT_POSITION.copy()
+                            print(f"{username} reconnecté avec nouvelle position (ID {player_id})")
+                        else:
+                            print(f"{username} reconnecté avec position conservée (ID {player_id})")
+                    
+                    # Retirer de la liste des déconnectés s'il y était
+                    if was_logged_out:
+                        logged_out_players.discard(player_id)
+                    
+                    lights.setdefault(player_id, True)  # 🔆
+                    
+                    await ws.send_json({
+                        "type": "reconnect_response",
+                        "success": True,
+                        "player_id": player_id,
+                        "username": username,
+                        "resetPosition": is_full_refresh or was_logged_out  # Indique au client si reset
+                    })
                     await broadcast_player_list()
 
             # ------------------ déconnexion volontaire -------------------
             elif msg.get("type") == "logout" and ws in player_ids:
                 logout_id = player_ids.pop(ws)
+                # Ajouter à logged_out_players et afficher debug
+                logged_out_players.add(logout_id)
+                print(f"Joueur {logout_id} ajouté à logged_out_players: {logged_out_players}")
+                
+                # Reste inchangé
                 player_names.pop(logout_id, None)
-                positions.pop(logout_id,  None)
-                lights.pop(logout_id,     None)              # 🔆
+                positions.pop(logout_id, None)
+                lights.pop(logout_id, None)
+                
                 print(f"{logout_id} déconnecté (logout)")
                 await broadcast_player_list()
 
@@ -118,13 +157,14 @@ async def ws_endpoint(ws: WebSocket):
                 key = f'{msg["x"]},{msg["y"]}'
                 doors[key] = not doors.get(key, False)
                 print(f"Porte {key} -> {doors[key]}")
+                
             # Pour hide
             elif msg.get("type") == "toggleHidingSpot" and ws in player_ids:
                 hide_key = f"{msg['x']},{msg['y']}"
                 hiding_spots[hide_key] = not hiding_spots.get(hide_key, False)
                 print(f"Cachette {hide_key} est maintenant {'occupée' if hiding_spots[hide_key] else 'libre'}")
 
-            # ------------------ NOUVEAU : lampe -------------------------- 🔆
+            # ------------------ NOUVEAU : lampe -------------------------- 🔆
             elif msg.get("type") == "toggleLight" and ws in player_ids:
                 pid = player_ids[ws]
                 lights[pid] = not lights.get(pid, True)
@@ -136,8 +176,8 @@ async def ws_endpoint(ws: WebSocket):
         if ws in player_ids:
             pid = player_ids.pop(ws)
             player_names.pop(pid, None)
-            positions.pop(pid,  None)
-            lights.pop(pid,     None)        # 🔆
+            positions.pop(pid, None)
+            lights.pop(pid, None)        # 🔆
             await broadcast_player_list()
 
 if __name__ == "__main__":

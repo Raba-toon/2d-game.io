@@ -148,7 +148,14 @@ const connectWebSocket = () => {
       connectedPlayers = data.players;
       updatePlayersList();
     }
-    
+    // Mettre à jour la liste des joueurs connectés
+    for (const [id, player] of Object.entries(others)) {
+      if (!connectedPlayers[id]) {
+        delete others[id]; // Supprimer les joueurs déconnectés
+      }
+    }
+
+
     // Traiter l'état du jeu (positions des joueurs et portes)
     if (data.type === "state") {
       // Positions des joueurs
