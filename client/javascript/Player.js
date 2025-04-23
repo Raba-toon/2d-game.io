@@ -46,7 +46,7 @@ export class Player {
 
     for (let y = top; y <= bottom; y++) {
       for (let x = left; x <= right; x++) {
-        if (map[y]?.[x] === 1 || map[y]?.[x] === 2) {
+        if ([6, 1].includes(map[y]?.[x]))  {
           return true;
         }
       }

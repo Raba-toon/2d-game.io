@@ -3,6 +3,10 @@ import { Door } from './Door.js';
 import { Player } from './Player.js';
 import { HidingSpot } from './Hide.js';
 
+
+const tileImage = new Image();
+tileImage.src = "/client/images/dungeon.png";
+
 // Variable globale pour stocker les informations du joueur
 let playerInfo = {
   id: null,
@@ -170,7 +174,7 @@ const connectWebSocket = () => {
         const [x, y] = key.split(',').map(Number);
         doors[key] = isOpen;
         if (mapData && mapData[y] && mapData[y][x] !== undefined) {
-          mapData[y][x] = isOpen ? 0 : 2;
+          mapData[y][x] = isOpen ? 10 : 1; // ← 10 = ouverte, 1 = fermée
         }
       }
       if (data.lights) {
@@ -230,35 +234,41 @@ function loadMap() {
 /* ──────────────────────────────────
    Helpers dessin
    ────────────────────────────────── */
-function drawGrid(ctx) {
-  for (let y = 0; y < gridData.length; y++) {
-    for (let x = 0; x < gridData[y].length; x++) {
-      ctx.fillStyle = gridData[y][x] === 1 ? "#333" : "#eee";
-      ctx.fillRect(x * TILE_SIZE, y * TILE_SIZE, TILE_SIZE, TILE_SIZE);
+   const TILESET_TILE_SIZE = 32; // taille des tuiles dans le tileset
+   const tilesPerRow = 8;        // 8 tuiles par ligne dans ton image
+   
+   function drawGrid(ctx) {
+     for (let y = 0; y < gridData.length; y++) {
+       for (let x = 0; x < gridData[y].length; x++) {
+         const tileType = gridData[y][x];
+   
+         const sx = (tileType % tilesPerRow) * TILESET_TILE_SIZE;
+         const sy = Math.floor(tileType / tilesPerRow) * TILESET_TILE_SIZE;
+   
+         ctx.drawImage(
+           tileImage,
+           sx, sy,
+           TILESET_TILE_SIZE, TILESET_TILE_SIZE,
+           x * TILE_SIZE, y * TILE_SIZE,
+           TILE_SIZE, TILE_SIZE // ← upscale vers 60x60
+         );
+       }
+     }
+  
+    // Garder les portes et cachettes par-dessus
+    for (const key in doors) {
+      const [x, y] = key.split(',').map(Number);
+      const door = doors[key];
+      if (door instanceof Door) {
+        door.draw(ctx, TILE_SIZE);
+      }
+    }
+  
+    for (const key in hidingSpots) {
+      hidingSpots[key].draw(ctx, TILE_SIZE);
     }
   }
   
-  // Dessiner les portes
-  for (const key in doors) {
-    const [x, y] = key.split(',').map(Number);
-    const door = doors[key];
-    if (door instanceof Door) {
-      door.draw(ctx, TILE_SIZE);
-    } else {
-      // Si on n'a pas d'objet Door, on dessine une porte basique
-      const isOpen = door === true;
-      if (!isOpen) {
-        ctx.fillStyle = '#8B4513'; // Porte fermée (marron)
-        ctx.fillRect(x * TILE_SIZE, y * TILE_SIZE, TILE_SIZE, TILE_SIZE);
-      }
-    }
-  }
-
-  // 🌿 Dessiner les cachettes
-  for (const key in hidingSpots) {
-    hidingSpots[key].draw(ctx, TILE_SIZE);
-  }
-}
 
 /* ──────────────────────────────────
    Halo de lumière sur overlay
