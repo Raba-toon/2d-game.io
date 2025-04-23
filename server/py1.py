@@ -12,6 +12,7 @@ player_ids: dict[WebSocket, str] = {}
 player_names: dict[str, str]     = {}
 doors: dict[str, bool]           = {}
 hiding_spots: dict[str, bool]    = {}
+hidden_players: set[str] = set()
 # --- NEW: état des lampes ---------------------------------------------- 🔆
 lights: dict[str, bool]          = {}   # id → True (allumée) / False (éteinte)
 # --- NEW: suivi des déconnexions volontaires --------------------------
@@ -35,7 +36,8 @@ async def broadcast_state():
                 "positions": positions,
                 "doors":     doors,
                 "lights":    lights,          # 🔆
-                "hiding_spots": hiding_spots
+                "hiding_spots": hiding_spots,
+                "hidden": list(hidden_players)
             }
             for ws in list(clients):
                 try:
@@ -169,6 +171,12 @@ async def ws_endpoint(ws: WebSocket):
                 pid = player_ids[ws]
                 lights[pid] = not lights.get(pid, True)
                 print(f"Lampe joueur {pid} -> {lights[pid]}")
+            elif msg.get("type") == "toggleHiding" and ws in player_ids:
+                pid = player_ids[ws]
+                if pid in hidden_players:
+                    hidden_players.remove(pid)
+                else:
+                    hidden_players.add(pid)
     except Exception as e:
         print("WS error:", e)
     finally:

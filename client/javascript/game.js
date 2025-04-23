@@ -183,6 +183,11 @@ const connectWebSocket = () => {
           }
         });
       }
+      if (data.hidden) {
+        for (const id of Object.keys(others)) {
+          others[id].isHidden = data.hidden.includes(id);
+        }
+      }
     }
   };
   
@@ -305,21 +310,19 @@ function toggleHidingNearPlayer(player) {
     const spot = hidingSpots[key];
 
     if (spot.isAt(player, TILE_SIZE)) {
-      // Si déjà caché → sortir
-      if (player.isHidden) {
-        player.isHidden = false;
-        spot.isOccupied = false;
-      } 
-      // Sinon → se cacher
-      else if (!spot.isOccupied) {
-        player.isHidden = true;
-        spot.isOccupied = true;
-      }
+      // Inverser l'état côté client
+      const willHide = !player.isHidden;
+      player.isHidden = willHide;
+      spot.isOccupied = willHide;
+
+      // 🔁 Toujours notifier le serveur
+      socket.send(JSON.stringify({ type: "toggleHiding" }));
 
       break; // Un seul spot à la fois
     }
   }
 }
+
 
 // Mise à jour de la liste des joueurs
 const updatePlayersList = () => {

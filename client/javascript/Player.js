@@ -71,7 +71,8 @@ export class Player {
    * @param {Object} others     other players
    */
   update(keys, dt, map, /** tileSize */ tileSize, others) {   // ←← renommé
-    
+    if (this.isHidden) return;
+  
     let dirX = (keys['d'] ? 1 : 0) - (keys['a'] ? 1 : 0);
     let dirY = (keys['s'] ? 1 : 0) - (keys['w'] ? 1 : 0);
 
