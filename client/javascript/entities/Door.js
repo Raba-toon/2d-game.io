@@ -1,6 +1,6 @@
 // src/entities/Door.js
-import { Entity } from '/Entity.js';
-import { TILE_SIZE } from '/utils/Constants.js';
+import { Entity } from './Entity.js';
+import { TILE_SIZE } from '../utils/Constants.js';
 
 /**
  * Classe représentant une porte dans le jeu

@@ -1,6 +1,6 @@
 // entities/Hunter.js
-import { Entity } from '/entities/Entity.js';
-import { HUNTER_SPEED } from '/utils/Constants.js';
+import { Entity } from './Entity.js';
+import { HUNTER_SPEED } from '../utils/Constants.js';
 
 export class Hunter extends Entity {
   constructor(id, x = 100, y = 100) {

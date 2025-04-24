@@ -4,16 +4,16 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Mon Jeu</title>
-  <script src="./client/javascript/Player.js" defer></script>
-  <script src="./client/javascript/game.js" type="module" defer></script>
+  <script src="/client/javascript/Player.js" defer></script>
+  <script src="/client/javascript/game.js" type="module" defer></script>
 
   <script type="module">
     window.startNewSystem = async function() {
       try {
         // Charger les modules de base
-        const { EventEmitter } = await import('/client/js/core/EventEmitter.js');
-        const { GameState } = await import('/client/js/core/GameState.js');
-        const { RenderSystem } = await import('/client/js/systems/RenderSystem.js');
+        const { EventEmitter } = await import('/client/javascript/core/EventEmitter.js');
+        const { GameState } = await import('/client/javascript/core/GameState.js');
+        const { RenderSystem } = await import('/client/javascript/systems/RenderSystem.js');
         
         // Créer les instances de base
         window.gameEvents = new EventEmitter();

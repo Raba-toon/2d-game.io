@@ -1,8 +1,8 @@
 // src/core/GameState.js
-import { Player } from '/entities/Player.js';
-import { Door } from '/entities/Door.js';
-import { HidingSpot } from '/entities/HidingSpot.js';
-import { TILE_SIZE } from '/utils/Constants.js';
+import { Player } from '../entities/Player.js';
+import { Door } from '../entities/Door.js';
+import { HidingSpot } from '../entities/HidingSpot.js';
+import { TILE_SIZE } from '../utils/constants.js';
 
 /**
  * Gestionnaire centralisé de l'état du jeu

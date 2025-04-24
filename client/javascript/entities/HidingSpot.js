@@ -1,6 +1,6 @@
 // src/entities/HidingSpot.js
-import { Entity } from '/Entity.js';
-import { TILE_SIZE } from '/utils/Constants.js';
+import { Entity } from '../entities/Entity.js';
+import { TILE_SIZE } from '../utils/Constants.js';
 
 /**
  * Classe représentant une cachette dans le jeu

@@ -1,6 +1,6 @@
 // src/entities/Player.js
 import { Entity } from './Entity.js';
-import { PLAYER_SPEED, SPRITE_WIDTH, SPRITE_HEIGHT, PLAYER_FRAME_COUNT, PLAYER_FRAME_DURATION } from '/utils/Constants.js';
+import { PLAYER_SPEED, SPRITE_WIDTH, SPRITE_HEIGHT, PLAYER_FRAME_COUNT, PLAYER_FRAME_DURATION } from '../utils/Constants.js';
 
 /**
  * Classe représentant un joueur dans le jeu
